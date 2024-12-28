@@ -1,2 +1,2 @@
-# otel-playground
-OpenTelemetry
+# OpenTelemetry Playground
+OpenTelemetry with NodeJS
