@@ -1,0 +1,28 @@
+{
+  "name": "otel-playground",
+  "version": "1.0.0",
+  "description": "OpenTelemetry Playground",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "users": "nodemon ./src/users-service.js",
+    "items": "nodemon ./src/items-service.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/faranak-cs/otel-playground.git"
+  },
+  "author": "Faran Khan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/faranak-cs/otel-playground/issues"
+  },
+  "homepage": "https://github.com/faranak-cs/otel-playground#readme",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "body-parser": "^1.20.3",
+    "express": "^4.21.2",
+    "nodemon": "^3.1.9"
+  }
+}
