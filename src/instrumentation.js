@@ -1,15 +1,16 @@
-import { PrometheusExporter } from "@opentelemetry/exporter-prometheus";
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-import { registerInstrumentations } from "@opentelemetry/instrumentation";
-import { ExpressInstrumentation } from "@opentelemetry/instrumentation-express";
-import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
-import { Resource } from "@opentelemetry/resources";
-import { MeterProvider } from "@opentelemetry/sdk-metrics";
-import {
+const { PrometheusExporter } = require("@opentelemetry/exporter-prometheus");
+const { OTLPTraceExporter } = require("@opentelemetry/exporter-trace-otlp-http");
+const { registerInstrumentations } = require("@opentelemetry/instrumentation");
+const { ExpressInstrumentation } = require("@opentelemetry/instrumentation-express");
+const { HttpInstrumentation } = require("@opentelemetry/instrumentation-http");
+const { Resource } = require("@opentelemetry/resources");
+const { MeterProvider } = require("@opentelemetry/sdk-metrics");
+const {
   NodeTracerProvider,
   SimpleSpanProcessor,
-} from "@opentelemetry/sdk-trace-node";
-import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
+  ConsoleSpanExporter,
+} = require("@opentelemetry/sdk-trace-node");
+const { ATTR_SERVICE_NAME } = require("@opentelemetry/semantic-conventions");
 
 const init = function (serviceName, metricPort) {
   // Define metrics
@@ -19,22 +20,24 @@ const init = function (serviceName, metricPort) {
     );
   });
 
-  // Get meter
-  const meter = new MeterProvider({
-    exporter: metricExporter,
-    interval: 1000,
-  }).getMeter("serviceName");
-
-  // Define traces
-  const traceExporter = new OTLPTraceExporter({
-    endpoint: "http://localhost:14268/api/traces",
+  // Create meter provider
+  const meterProvider = new MeterProvider({
+    readers: [metricExporter],
   });
 
+  // Get meter
+  const meter = meterProvider.getMeter(serviceName);
+
+  // Define traces
+  const traceExporter = new ConsoleSpanExporter();
+  const processor = new SimpleSpanProcessor(traceExporter);
+
+  // Create trace provider
   const provider = new NodeTracerProvider({
     resource: new Resource({
       [ATTR_SERVICE_NAME]: serviceName,
     }),
-    spanProcessors: [new SimpleSpanProcessor(traceExporter)],
+    spanProcessors: [processor],
   });
 
   provider.register();
@@ -51,4 +54,4 @@ const init = function (serviceName, metricPort) {
   return { meter, tracer };
 };
 
-export default init;
+module.exports = init;

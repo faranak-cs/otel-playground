@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "OpenTelemetry Playground",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "users": "nodemon ./src/users-service.js",
     "items": "nodemon ./src/items-service.js",
