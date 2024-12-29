@@ -1,10 +1,10 @@
 const axios = require("axios");
 const express = require("express");
 const bodyParser = require("body-parser");
-const init = require("./instrumentation.js");
+const init = require("./otel.js");
 const api = require("@opentelemetry/api");
 
-const { meter } = init("items-service", 8081);
+const { meter, tracer } = init("items-service", 8081);
 const app = express();
 
 // app.use(bodyParser.json());
@@ -12,12 +12,13 @@ const app = express();
 
 // Define prometheus counter
 const httpCounter = meter.createCounter("http_calls");
+
 app.use((req, res, next) => {
   httpCounter.add(1);
   next();
 });
 
-app.get("/data", async (req, res) => {
+app.route("/data").get(async (req, res) => {
   try {
     if (req.query["fail"]) {
       throw new Error("A really bad error :/");
@@ -25,11 +26,24 @@ app.get("/data", async (req, res) => {
     const apiResponse = await axios.get("http://localhost:8090/user");
     res.json(apiResponse.data);
   } catch (error) {
+    // Get active span
     const activeSpan = api.trace.getSpan(api.context.active());
-    const traceId = activeSpan.spanContext().traceId;
 
-    // Combine log  with trace
-    console.error(`Critical Error, traceId: ${traceId}`);
+    if (activeSpan) {
+      const traceId = activeSpan.spanContext().traceId;
+      // Combine log  with trace
+      console.error(`Critical Error, traceId: ${traceId}`);
+      activeSpan.recordException(error);
+    } else {
+      console.warn("No active span found");
+    }
+
+    // Create a span
+    const span = tracer.startSpan("items-service");
+    span.addEvent("An error has occurred");
+    span.end();
+    console.error(`Critical Error, traceId: ${span.spanContext().traceId}`);
+
     res.sendStatus(500);
   }
 });

@@ -5,19 +5,13 @@ const { ExpressInstrumentation } = require("@opentelemetry/instrumentation-expre
 const { HttpInstrumentation } = require("@opentelemetry/instrumentation-http");
 const { Resource } = require("@opentelemetry/resources");
 const { MeterProvider } = require("@opentelemetry/sdk-metrics");
-const {
-  NodeTracerProvider,
-  SimpleSpanProcessor,
-  ConsoleSpanExporter,
-} = require("@opentelemetry/sdk-trace-node");
+const { NodeTracerProvider, SimpleSpanProcessor, BatchSpanProcessor } = require("@opentelemetry/sdk-trace-node");
 const { ATTR_SERVICE_NAME } = require("@opentelemetry/semantic-conventions");
 
 const init = function (serviceName, metricPort) {
   // Define metrics
   const metricExporter = new PrometheusExporter({ port: metricPort }, () => {
-    console.log(
-      `scrape: http://localhost:${metricPort}${PrometheusExporter.DEFAULT_OPTIONS.endpoint}`
-    );
+    console.log(`scrape: http://localhost:${metricPort}${PrometheusExporter.DEFAULT_OPTIONS.endpoint}`);
   });
 
   // Create meter provider
@@ -29,8 +23,10 @@ const init = function (serviceName, metricPort) {
   const meter = meterProvider.getMeter(serviceName);
 
   // Define traces
-  const traceExporter = new ConsoleSpanExporter();
-  const processor = new SimpleSpanProcessor(traceExporter);
+  // const traceExporter = new ConsoleSpanExporter();
+  const traceExporter = new OTLPTraceExporter();
+
+  const processor = new BatchSpanProcessor(traceExporter);
 
   // Create trace provider
   const provider = new NodeTracerProvider({
