@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: items-service
+    scrape_interval: 5s
+    # timeout should always be less than interval
+    scrape_timeout: 2s
+    honor_labels: true
+    static_configs:
+      # scrape urls for both services
+      - targets: ["host.docker.internal:8091", "host.docker.internal:8081"]
